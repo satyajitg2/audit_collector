@@ -51,9 +51,14 @@ pub struct MacLogEntry {
     pub timestamp: Option<String>,
     pub subsystem: Option<String>,
     pub category: Option<String>,
-    pub processImagePath: Option<String>,
-    pub processID: Option<u64>,
-    pub threadID: Option<u64>,
-    pub eventMessage: Option<String>,
-    pub messageType: Option<String>,
+    #[serde(rename = "processImagePath")]
+    pub process_image_path: Option<String>,
+    #[serde(rename = "processID")]
+    pub process_id: Option<u64>,
+    #[serde(rename = "threadID")]
+    pub thread_id: Option<u64>,
+    #[serde(rename = "eventMessage")]
+    pub event_message: Option<String>,
+    #[serde(rename = "messageType")]
+    pub message_type: Option<String>,
 }

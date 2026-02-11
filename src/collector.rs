@@ -3,7 +3,7 @@ use crate::source::AuditSource;
 use anyhow::{Context, Result};
 use crossbeam_channel::Sender;
 use std::sync::Arc;
-use std::thread;
+
 
 /// The Collector orchestrates reading from the source, parsing, and sending to the pipeline.
 pub struct Collector {
@@ -60,16 +60,16 @@ impl Collector {
              if let Ok(entry) = serde_json::from_str::<crate::model::MacLogEntry>(&s) {
                  type_id = 1; // Generic Type
                  
-                 if let Some(msg) = entry.eventMessage {
+                 if let Some(msg) = entry.event_message {
                      fields.insert("message".to_string(), msg);
                  }
-                 if let Some(proc) = entry.processImagePath.clone() {
+                 if let Some(proc) = entry.process_image_path.clone() {
                      fields.insert("process".to_string(), proc);
                  }
-                 if let Some(pid) = entry.processID {
+                 if let Some(pid) = entry.process_id {
                      fields.insert("pid".to_string(), pid.to_string());
                  }
-                 if let Some(tid) = entry.threadID {
+                 if let Some(tid) = entry.thread_id {
                      fields.insert("thread_id".to_string(), tid.to_string());
                  }
                  if let Some(sub) = entry.subsystem {
@@ -78,7 +78,7 @@ impl Collector {
                  if let Some(cat) = entry.category {
                      fields.insert("category".to_string(), cat);
                  }
-                 if let Some(lib) = entry.processImagePath.as_ref() { 
+                 if let Some(lib) = entry.process_image_path.as_ref() { 
                       // Sometimes image path is the library if it's loaded dylib vs executable? 
                       // Actually processImagePath is usually the main executable.
                       fields.insert("library".to_string(), lib.clone());

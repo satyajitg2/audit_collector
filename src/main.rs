@@ -1,7 +1,13 @@
 use audit_collector::collector::Collector;
-use audit_collector::source::{MacLogSource, AuditSource, MockAuditSource};
+use audit_collector::source::AuditSource;
+#[cfg(target_os = "macos")]
+use audit_collector::source::MacLogSource;
+#[cfg(target_os = "linux")]
+use audit_collector::source::LinuxAuditSource;
+#[cfg(target_os = "windows")]
+use audit_collector::source::WindowsEventSource;
 use audit_collector::model::{FilterConfig, AuditEvent};
-use crossbeam_channel::{unbounded, Receiver};
+use crossbeam_channel::unbounded;
 use std::sync::{Arc, RwLock};
 use std::thread;
 use std::time::Duration;
@@ -69,8 +75,28 @@ fn start_collector(state: Arc<AppState>) {
     println!("Restarting collector with config: {:?}", config);
 
     // Create source
-    let source = match MacLogSource::new(config) {
-        Ok(s) => Arc::new(s),
+    // Create source
+    let source_result: anyhow::Result<Arc<dyn AuditSource>> = {
+        #[cfg(target_os = "macos")]
+        {
+            MacLogSource::new(config).map(|s| Arc::new(s) as Arc<dyn AuditSource>)
+        }
+        #[cfg(target_os = "linux")]
+        {
+            LinuxAuditSource::new().map(|s| Arc::new(s) as Arc<dyn AuditSource>)
+        }
+        #[cfg(target_os = "windows")]
+        {
+            WindowsEventSource::new().map(|s| Arc::new(s) as Arc<dyn AuditSource>)
+        }
+        #[cfg(not(any(target_os = "macos", target_os = "linux", target_os = "windows")))]
+        {
+            Err(anyhow::anyhow!("Unsupported OS"))
+        }
+    };
+
+    let source = match source_result {
+        Ok(s) => s,
         Err(e) => {
             eprintln!("Failed to create source: {}", e);
             return;
@@ -98,7 +124,7 @@ fn start_collector(state: Arc<AppState>) {
         
         // Collector needs to run.
         let col_thread = thread::spawn(move || {
-            if let Err(e) = collector.run() {
+            if let Err(_e) = collector.run() {
                // eprintln!("Collector stopped: {:?}", e);
             }
         });

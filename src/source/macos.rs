@@ -1,49 +1,12 @@
+use super::AuditSource;
 use crate::model::FilterConfig;
-use anyhow::{Context, Result};
+use anyhow::Result;
 use std::collections::VecDeque;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use std::thread;
-use std::process::{Command, Stdio, Child};
+use std::process::{Command, Stdio};
 use std::io::{BufRead, BufReader};
-
-// ... existing traits and mock source ...
-pub trait AuditSource: Send + Sync {
-    /// Blocks until a new packet of data is available.
-    fn receive(&self) -> Result<Vec<u8>>;
-    /// Optional: Signal to stop the source
-    fn stop(&self) {}
-}
-
-/// A Mock source that replays a predefined sequence of byte vectors.
-pub struct MockAuditSource {
-    queue: Arc<Mutex<VecDeque<Vec<u8>>>>,
-}
-
-impl MockAuditSource {
-    pub fn new(data: Vec<Vec<u8>>) -> Self {
-        Self {
-            queue: Arc::new(Mutex::new(VecDeque::from(data))),
-        }
-    }
-    pub fn push(&self, packet: Vec<u8>) {
-        self.queue.lock().unwrap().push_back(packet);
-    }
-}
-
-impl AuditSource for MockAuditSource {
-    fn receive(&self) -> Result<Vec<u8>> {
-        loop {
-            let mut q = self.queue.lock().unwrap();
-            if let Some(data) = q.pop_front() {
-                return Ok(data);
-            }
-            drop(q);
-            thread::sleep(Duration::from_millis(100));
-        }
-    }
-}
-
 
 /// Source that reads from macOS 'log stream' command using dynamic filters.
 pub struct MacLogSource {
@@ -155,25 +118,5 @@ impl AuditSource for MacLogSource {
             // Kill the process
             let _ = Command::new("kill").arg(pid.to_string()).status();
         }
-    }
-}
-
-/// A placeholder for the real Netlink Source.
-/// On a real Linux system, this would use `socket(AF_NETLINK, ...)`
-pub struct NetlinkAuditSource;
-
-impl NetlinkAuditSource {
-    pub fn new() -> Self {
-        // In a real implementation, this would open the socket.
-        Self
-    }
-}
-
-impl AuditSource for NetlinkAuditSource {
-    fn receive(&self) -> Result<Vec<u8>> {
-        // TODO: Implement actual recvfrom() on the netlink socket.
-        // For now, this just sleeps to simulate idle.
-        thread::sleep(Duration::from_secs(1));
-        Ok(vec![])
     }
 }
