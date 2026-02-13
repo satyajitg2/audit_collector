@@ -1,0 +1,31 @@
+<?xml version='1.0' encoding='windows-1252'?>
+<!--
+  Copyright (C) 2026 Satyajit Singh
+-->
+<Wix xmlns='http://schemas.microsoft.com/wix/2006/wi'>
+    <Product Id='*' Name='Audit Collector' UpgradeCode='12345678-1234-1234-1234-123456789012' Manufacturer='Satyajit Singh' Language='1033' Codepage='1252' Version='0.1.0'>
+        <Package Id='*' Keywords='Installer' Description='Audit Collector Installer' Comments='Audit Collector is a registered trademark of Satyajit Singh.' Manufacturer='Satyajit Singh' InstallerVersion='100' Languages='1033' Compressed='yes' SummaryCodepage='1252'/>
+
+        <Media Id='1' Cabinet='auditcollector.cab' EmbedCab='yes'/>
+
+        <Directory Id='TARGETDIR' Name='SourceDir'>
+            <Directory Id='ProgramFilesFolder' Name='PFiles'>
+                <Directory Id='AuditCollector' Name='Audit Collector'>
+                    <!-- Main executable component -->
+                    <Component Id='MainExecutable' Guid='*'>
+                        <File Id='AuditCollectorEXE' Name='audit_collector.exe' DiskId='1' Source='target\release\audit_collector.exe' KeyPath='yes'/>
+                    </Component>
+                    <!-- Documentation -->
+                    <Component Id='Readme' Guid='*'>
+                        <File Id='ReadmeTXT' Name='README.md' DiskId='1' Source='README.md' KeyPath='yes'/>
+                    </Component>
+                </Directory>
+            </Directory>
+        </Directory>
+
+        <Feature Id='Complete' Level='1'>
+            <ComponentRef Id='MainExecutable'/>
+            <ComponentRef Id='Readme'/>
+        </Feature>
+    </Product>
+</Wix>
